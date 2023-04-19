@@ -9,6 +9,7 @@ from gpt_index.data_structs.data_structs_v2 import (
     ChromaIndexDict,
     FaissIndexDict,
     IndexDict,
+    AnalyticDBIndexDict,
     MilvusIndexDict,
     OpensearchIndexDict,
     PineconeIndexDict,
@@ -24,6 +25,7 @@ from gpt_index.vector_stores import (
     ChatGPTRetrievalPluginClient,
     ChromaVectorStore,
     FaissVectorStore,
+    AnalyticDBVectorStore,
     MilvusVectorStore,
     PineconeVectorStore,
     QdrantVectorStore,
@@ -350,6 +352,85 @@ class GPTQdrantIndex(GPTVectorStoreIndex):
             **kwargs,
         )
 
+class GPTAnalyticDBIndex(GPTVectorStoreIndex):
+    """GPT AnalyticDB Index.
+
+    In this GPT index we store the text, its embedding and
+    a few pieces of its metadata in a AnalyticDB collection.
+    This implementation allows the use of an already existing
+    collection if it is one that was created this vector store.
+    It also supports creating a new one if the collection doesnt exist
+    or if `overwrite` is set to True.
+
+    Args:
+        service_context (ServiceContext): Service context container (contains
+            components like LLMPredictor, PromptHelper, etc.).
+        collection_name (str, optional): The name of the collection
+            where data will be stored. Defaults to "llamalection".
+        index_params (dict, optional): The index parameters for AnalyticDB,
+            if none are provided an HNSW index will be used. Defaults to None.
+        search_params (dict, optional): The search parameters for a AnalyticDB query.
+            If none are provided, default params will be generated. Defaults to None.
+        dim (int, optional): The dimension of the embeddings. If it is not provided,
+            collection creation will be done on first insert. Defaults to None.
+        host (str, optional): The host address of AnalyticDB. Defaults to "localhost".
+        port (int, optional): The port of AnalyticDB. Defaults to 19530.
+        user (str, optional): The username for RBAC. Defaults to "".
+        password (str, optional): The password for RBAC. Defaults to "".
+        use_secure (bool, optional): Use https. Defaults to False.
+        overwrite (bool, optional): Whether to overwrite existing collection
+            with same name. Defaults to False.
+
+    Returns:
+        AnalyticDBVectorstore: Vectorstore that supports add, delete, and query.
+    """
+
+    index_struct_cls: Type[IndexDict] = AnalyticDBIndexDict
+
+    def __init__(
+        self,
+        nodes: Optional[Sequence[Node]] = None,
+        collection_name: str = "llamalection",
+        index_params: Optional[dict] = None,
+        search_params: Optional[dict] = None,
+        dim: Optional[int] = None,
+        host: str = "localhost",
+        port: int = 5432,
+        database: str = "postgres",
+        user: str = "user",
+        password: str = "password",
+        use_secure: bool = False,
+        overwrite: bool = False,
+        service_context: Optional[ServiceContext] = None,
+        index_struct: Optional[IndexDict] = None,
+        vector_store: Optional[AnalyticDBVectorStore] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Init params."""
+
+        if vector_store is None:
+            vector_store = AnalyticDBVectorStore(
+                collection_name=collection_name,
+                index_params=index_params,
+                search_params=search_params,
+                dim=dim,
+                host=host,
+                port=port,
+                database=database,
+                user=user,
+                password=password,
+                use_secure=use_secure,
+                overwrite=overwrite,
+            )
+        assert vector_store is not None
+
+        super().__init__(
+            nodes=nodes,
+            index_struct=index_struct,
+            service_context=service_context,
+            vector_store=vector_store,
+            **kwargs,
+        )
 
 class GPTMilvusIndex(GPTVectorStoreIndex):
     """GPT Milvus Index.

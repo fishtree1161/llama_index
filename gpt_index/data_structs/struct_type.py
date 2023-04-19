@@ -60,6 +60,7 @@ class IndexStructType(str, Enum):
     WEAVIATE = "weaviate"
     PINECONE = "pinecone"
     QDRANT = "qdrant"
+    ANALYTICDB = "analyticDB"
     MILVUS = "milvus"
     CHROMA = "chroma"
     VECTOR_STORE = "vector_store"
